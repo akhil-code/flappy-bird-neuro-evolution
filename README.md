@@ -6,17 +6,21 @@ from [(wikipedia)](https://en.wikipedia.org/wiki/Neuroevolution_of_augmenting_to
 
 ## Setup instructions
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
-### Prerequisites
+#### Prerequisites
 + [Python](https://www.python.org/downloads/) (with [numpy](https://docs.scipy.org/doc/numpy-1.15.1/user/install.html) library installed)
-### Deploying
+#### Deploying
 + Clone the Repository `git clone https://github.com/akhil-code/flappy-bird-neuro-evolution`
 + Change current directory to this repository
 + Run the application using command `python app.py`
 + Upon executing the above command, a population of birds will start learning to play the game.
 
+## Future plans
++ Will try implementing the same algorithm on different games like Snake, 2048 etc. Stay tuned
++ Will use deep learning inorder to take image as input instead of game features.
+
 ## Authors
 + Akhil Guttula
 
 ## Learn more
-+ [Genetic Algorithm by Siraj Raval] (https://www.youtube.com/watch?v=rGWBo0JGf50&t=1767s)
++ [Genetic Algorithm by Siraj Raval](https://www.youtube.com/watch?v=rGWBo0JGf50&t=1767s)
 + [Neuro-evolution by Siraj Raval](https://www.youtube.com/watch?v=xLHCMMGuN0Q&t=2578s)
