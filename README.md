@@ -8,7 +8,7 @@ from [(wikipedia)](https://en.wikipedia.org/wiki/Neuroevolution_of_augmenting_to
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 #### Prerequisites
 + [Python](https://www.python.org/downloads/) (with [numpy](https://docs.scipy.org/doc/numpy-1.15.1/user/install.html) library installed)
-#### Deploying
+#### Deployment
 + Clone the Repository `git clone https://github.com/akhil-code/flappy-bird-neuro-evolution`
 + Change current directory to this repository
 + Run the application using command `python app.py`
