@@ -1,12 +1,16 @@
-from numpy import random, array, reshape
 from math import floor
+
 import pygame
+from numpy import array, random, reshape
+
 from genetic import Population
 
+
 def do_overlap(rect1, rect2):
+    """ utility function to check if two rectangles overlap"""
     l1, r1 = rect1.topleft, rect1.bottomright
     l2, r2 = rect2.topleft, rect2.bottomright
-    # condition to not overlap
+    # conditions for non overlapping
     if r1[0] < l2[0] or r2[0] < l1[0]:
         return False
     if r2[1] < l1[1] or r1[1] < l2[1]:
@@ -15,6 +19,7 @@ def do_overlap(rect1, rect2):
     return True
 
 class Color:
+    """ This class stores standard colors required for game """
     RED = (255,0,0)
     GREEN = (0,255,0)
     BLUE = (0,0,255)
@@ -22,22 +27,22 @@ class Color:
     YELLOW = (255,255,0)
     BLACK = (0,0,0)
 
-    colors = array([RED, GREEN, BLUE, WHITE, YELLOW])
 
 class Game:
-    WIDTH = 640             # width of screen
-    HEIGHT = 480            # height of screen
-    FRAME_RATE = 1200        # FPS
-    FRAMES = 0              # counts number of frames elapsed
-    TITLE = 'Flappy bird'   # Window Title
-    EXIT = False            # Flag to exit the game
-    GAME_OVER = False       # Flag to denote if it's game over
+    """ Class responsible for iterating the game via frames """
+    WIDTH = 640                 # width of screen
+    HEIGHT = 480                # height of screen
+    FRAME_RATE = 1200           # FPS
+    FRAMES = 0                  # counts number of frames elapsed
+    TITLE = 'Flappy bird'       # Window Title
+    EXIT = False                # Flag to exit the game
+    GAME_OVER = False           # Flag to denote if it's game over
     ICON_PATH = 'res/icon.jpg'
     MANUAL = False
-    # MANUAL = True
 
     # initializes required objects required for game
     def initialize():
+        # initializes modules required for pygame
         pygame.init()
 
         # screen parameters
@@ -46,7 +51,7 @@ class Game:
         pygame.display.set_caption(Game.TITLE)
         screen = pygame.display.set_mode(Game.get_dimensions())
 
-        # Feature limits
+        # Feature limits for neural network's normalization
         feature_limits = array([Game.HEIGHT, 100, Game.HEIGHT, Game.HEIGHT, Game.WIDTH])
         Game.feature_limits = reshape(feature_limits, (1,-1))
         
@@ -54,17 +59,20 @@ class Game:
         clock = pygame.time.Clock()
         
         # initializing game objects
-        population = Population(pop_size=30, feature_limits=Game.feature_limits)
-        pipes = []
+        population = Population(pop_size=30, feature_limits=Game.feature_limits)    # population of birds
+        pipes = []                                                                  # pipes on screen
 
         return screen, clock, population, pipes
 
     def reset():
-        Game.FRAMES = 0
-        pipes = []
+        """ resets the game i.e removes all pipes on the screen """
+        Game.FRAMES = 0             # resets number of frames to zero
+        pipes = []                  # removes all the pipes on the screen
         return pipes
     
     def check_for_collision(population, pipes):
+        """ Checks if a bird hits the pipe or touches floor or roof """
+        # checking if any bird hits pipes
         for pipe in pipes:
             upper_rect, lower_rect = pipe.get_pipe_rects()
             for individual in population.individuals:
@@ -74,20 +82,22 @@ class Game:
                     if touch_pipes:
                         individual.bird.game_over = True
         
+        # checking if any bird hits floor or roof
         for individual in population.individuals:
             bird = individual.bird
             if not bird.game_over and (bird.posy < 0 or bird.posy+bird.height > Game.HEIGHT):
                 bird.game_over = True
 
 
-    
     def update_scores(population):
+        """ updates the score of birds that are alive """
         for individual in population.individuals:
             bird = individual.bird
             if not bird.game_over:
                 individual.bird.score = Game.FRAMES
         
     def update_objects(population, pipes):
+        """ updates the logic for objects in the game (like movement) """
         # move pipes on the screen
         pipes = Pipe.move_pipes(pipes)
 
@@ -96,6 +106,8 @@ class Game:
             if not individual.bird.game_over:
                 individual.bird.update()
         
+        # has to change
+        # feed forward the population of neural network
         population.update(Pipe.get_nearest_pipe(population.individuals[0].bird, pipes))
 
         # check if the birds hit the pipes
@@ -106,19 +118,21 @@ class Game:
 
 
     def get_dimensions():
+        """ return the dimensions of the screen """
         return (Game.WIDTH, Game.HEIGHT)
     
     def draw_screen(screen, population, pipes):
-        Game.FRAMES += 1
+        """ draws images on the screen with respect to properties of objects using pygame functions """
+        Game.FRAMES += 1        # has to change
         screen.fill(Color.BLACK)
 
-        # draw bird
+        # draw birds
         for individual in population.individuals:
             bird = individual.bird
             if not bird.game_over:
                 pygame.draw.circle(screen, bird.color, bird.get_center(), bird.radius)
 
-
+        # draw pipes
         for pipe in pipes:
             upper_rect, lower_rect = pipe.get_pipe_rects()
             pygame.draw.rect(screen, Color.WHITE, upper_rect)
@@ -129,10 +143,14 @@ class Game:
     
     
     def loop(screen, clock, population, pipes):
+        """ looper for pygame. Loops frames of the game """
+        
+        # loops untill game is not exited
         while not Game.EXIT:
             # objects updated for each frame
             Game.update_objects(population, pipes)
 
+            # has to change
             # manual input by human
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -141,12 +159,17 @@ class Game:
                     if event.key == pygame.K_UP:
                         population.individuals[0].bird.fly()
             
+            # has to change
+            # checks if any bird of the population is alive
             if Game.are_all_birds_dead(population):
+                """ if population is dead then evolve them """
                 population.evolve()
                 population.reset_individuals_to_inital_state()
                 pipes = Game.reset()
 
+            # drawing objects on the screen
             Game.draw_screen(screen, population, pipes)
+            # ticks the clock - used to control frame rate
             clock.tick(Game.FRAME_RATE)
     
     def are_all_birds_dead(population):
@@ -157,33 +180,37 @@ class Game:
     
 
 class Bird:
-    ANIMATION_RATE = 5      # animates for every 5 elapsed frames
+    ANIMATION_RATE = 5                  # animates for every 5 elapsed frames
     def __init__(self):
-        self.radius = 15
-        self.width = self.radius*2
-        self.height = self.radius*2
-        self.posx = 0
-        self.posy = int(Game.HEIGHT/2)
+        self.radius = 15                # radius of bird
+        self.width = self.radius*2      # width of bird
+        self.height = self.radius*2     # height of bird
+        self.posx = 0                   # x cordinate
+        self.posy = int(Game.HEIGHT/2)  # y cordinate
         # gravitation parameters
-        self.velocity = 0
-        self.gravity = 0.08
+        self.velocity = 0               # velocity in y-direction
+        self.gravity = 0.08             # gravity in y-direction
 
-        self.color = (
+        # random color to each and every bird
+        self.color = (                  
             random.randint(256),
             random.randint(256),
             random.randint(256),
         )
 
-        self.score = 0
-        self.game_over = False
-        self.last_update = 0
+        self.score = 0                  # score of the bird
+        self.game_over = False          # flag will be set if it hits any object
+        self.last_update = 0            # timestamp used for controlling animation
 
     def get_center(self):
+        """ finds center of the bird """
         x = self.posx + self.radius
         y = self.posy + self.radius
         return (x,y)
     
     def update(self):
+        """ updates the attributes of bird """
+        # finding the new position of bird after elapsing few frames
         t = Game.FRAMES - self.last_update
         if t > Bird.ANIMATION_RATE:
             u = self.velocity
@@ -192,31 +219,24 @@ class Bird:
             # updating position and velocity based on equations of motion
             self.posy += floor((u*t) + (0.5*(a*t*t)))
             self.velocity = u + a*t
-
-            # if bird goes above the screen
-            # if self.posy < 0:
-                # self.posy = 0
-            
-            # if it goes below the screen
-            # elif self.posy + self.height > Game.HEIGHT:
-                # self.posy = Game.HEIGHT - self.height
-            
             # stores the instant, when updated
             self.last_update = Game.FRAMES
     
     def fly(self):
+        """ sets the y-velocity of bird when user taps the screen / presses up arrow """
         self.velocity = -3      # impulsive velocity in upward direction
     
     def get_rect(self):
+        """ return pygame rectangle object of the bird """
         return pygame.rect.Rect(self.posx, self.posy, self.width, self.height)
 
 
 class Pipe:
-    gap_width = 175             # vertical gap between two pipes
-    width = 30                  # width of each pipe
-    space_between_pipes = 350   # space between two adjacent pipes
-    stepx = 5                   # pipes move in x direction by 5px
-    ANIMATION_RATE = 5          # animates after every 5th frame
+    gap_width = 175                         # vertical gap between two pipes
+    width = 30                              # width of each pipe
+    space_between_pipes = 350               # space between two adjacent pipes
+    stepx = 5                               # pipes move in x direction by 5px
+    ANIMATION_RATE = 5                      # animates after every 5th frame
 
     def __init__(self):
         # space between two vertical pipes is denoted as gap
@@ -227,12 +247,14 @@ class Pipe:
         self.last_update = 0
     
     def update(self):
+        # updates the position of pipes after elapsing few frames
         t = Game.FRAMES - self.last_update
         if t > Pipe.ANIMATION_RATE:
             self.posx -= Pipe.stepx
             self.last_update = Game.FRAMES
     
     def get_pipe_rects(self):
+        """ returns pygame rect objects of vertical pipe pair """
         # upper pipe
         pipe_position = (self.posx, 0)
         pipe_dimensions = (self.width, self.gap_start)
@@ -246,6 +268,7 @@ class Pipe:
         return upper_rect, lower_rect
 
     def move_pipes(pipes):
+        """ function used to remove pipes stripping away from screen and adding new pipes as well """
         if len(pipes) > 0:
             # add new pipe if possible
             last_pipe = pipes[-1]
@@ -267,8 +290,7 @@ class Pipe:
         return pipes
 
     def get_nearest_pipe(bird, pipes):
+        """ return pipe nearest/ahead of the bird """
         for pipe in pipes:
             if bird.posx < pipe.posx + pipe.width:
                 return pipe
-
-
