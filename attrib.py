@@ -22,6 +22,7 @@ class Color:
     """ This class stores standard colors required for game """
     RED = (255,0,0)
     GREEN = (0,255,0)
+    DARK_GREEN = (0,153,0)
     BLUE = (0,0,255)
     WHITE = (255,255,255)
     YELLOW = (255,255,0)
@@ -32,7 +33,7 @@ class Game:
     """ Class responsible for iterating the game via frames """
     WIDTH = 640                 # width of screen
     HEIGHT = 480                # height of screen
-    FRAME_RATE = 1200           # FPS
+    FRAME_RATE = 1200           # FPS (240, 1200)
     FRAMES = 0                  # counts number of frames elapsed
     TITLE = 'Flappy bird'       # Window Title
     EXIT = False                # Flag to exit the game
@@ -62,7 +63,10 @@ class Game:
         population = Population(pop_size=30, feature_limits=Game.feature_limits)    # population of birds
         pipes = []                                                                  # pipes on screen
 
-        return screen, clock, population, pipes
+        # background image
+        background_image = pygame.image.load('res/background.png').convert()
+
+        return screen, clock, population, pipes, background_image
 
     def reset():
         """ resets the game i.e removes all pipes on the screen """
@@ -121,28 +125,29 @@ class Game:
         """ return the dimensions of the screen """
         return (Game.WIDTH, Game.HEIGHT)
     
-    def draw_screen(screen, population, pipes):
+    def draw_screen(screen, population, pipes, background_image):
         """ draws images on the screen with respect to properties of objects using pygame functions """
         Game.FRAMES += 1        # has to change
-        screen.fill(Color.BLACK)
+        screen.blit(background_image, (0, 0))
+
 
         # draw birds
         for individual in population.individuals:
             bird = individual.bird
             if not bird.game_over:
-                pygame.draw.circle(screen, bird.color, bird.get_center(), bird.radius)
+                screen.blit(bird.image, (bird.posx, bird.posy))
 
         # draw pipes
         for pipe in pipes:
             upper_rect, lower_rect = pipe.get_pipe_rects()
-            pygame.draw.rect(screen, Color.WHITE, upper_rect)
-            pygame.draw.rect(screen, Color.WHITE, lower_rect)
+            pygame.draw.rect(screen, Color.DARK_GREEN, upper_rect)
+            pygame.draw.rect(screen, Color.DARK_GREEN, lower_rect)
         
         # update whole screen
         pygame.display.update()
     
     
-    def loop(screen, clock, population, pipes):
+    def loop(screen, clock, population, pipes, background_image):
         """ looper for pygame. Loops frames of the game """
         
         # loops untill game is not exited
@@ -168,7 +173,7 @@ class Game:
                 pipes = Game.reset()
 
             # drawing objects on the screen
-            Game.draw_screen(screen, population, pipes)
+            Game.draw_screen(screen, population, pipes, background_image)
             # ticks the clock - used to control frame rate
             clock.tick(Game.FRAME_RATE)
     
@@ -181,12 +186,18 @@ class Game:
 
 class Bird:
     ANIMATION_RATE = 5                  # animates for every 5 elapsed frames
+
     def __init__(self):
-        self.radius = 15                # radius of bird
-        self.width = self.radius*2      # width of bird
-        self.height = self.radius*2     # height of bird
         self.posx = 0                   # x cordinate
         self.posy = int(Game.HEIGHT/2)  # y cordinate
+
+        filename = 'res/bird.png'
+        self.image = pygame.image.load(filename).convert()
+        self.image.set_colorkey(Color.BLACK)
+        rect = self.image.get_rect()
+
+        self.width, self.height = rect.width, rect.height
+
         # gravitation parameters
         self.velocity = 0               # velocity in y-direction
         self.gravity = 0.08             # gravity in y-direction
@@ -233,7 +244,7 @@ class Bird:
 
 class Pipe:
     gap_width = 175                         # vertical gap between two pipes
-    width = 30                              # width of each pipe
+    width = 40                              # width of each pipe
     space_between_pipes = 350               # space between two adjacent pipes
     stepx = 5                               # pipes move in x direction by 5px
     ANIMATION_RATE = 5                      # animates after every 5th frame

@@ -138,7 +138,6 @@ class Population:
         self.breed()
         self.parents = []
         self.generation += 1
-        # print(f'evolved to {self.generation}')
     
     def reset_individuals_to_inital_state(self):
         """ reinstantiates entire population """
